@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, CheckCircle, XCircle, Home, ArrowRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Brain, CheckCircle, XCircle, Home, ArrowRight, Coins } from 'lucide-react';
 
 interface Problem {
   question: string;
@@ -21,7 +22,7 @@ interface Problem {
 }
 
 const Practice = () => {
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { progress, updateProgress } = useStudent();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -127,13 +128,38 @@ const Practice = () => {
     setSelectedAnswer(answer);
   };
 
-  const handleSubmit = () => {
-    if (!currentProblem || !selectedAnswer) return;
+  const handleSubmit = async () => {
+    if (!currentProblem || !selectedAnswer || !user) return;
+
+    // Check if user has tokens
+    if ((profile?.tokens_remaining || 0) <= 0) {
+      toast({
+        title: "No Tokens Remaining",
+        description: "Please purchase more tokens to continue learning.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+      return;
+    }
 
     const correct = selectedAnswer === currentProblem.correct;
     setIsCorrect(correct);
     setShowResult(true);
     setSessionCount(sessionCount + 1);
+    
+    // Consume a token
+    try {
+      await supabase
+        .from('profiles')
+        .update({ 
+          tokens_remaining: (profile?.tokens_remaining || 1) - 1 
+        })
+        .eq('user_id', user.id);
+      
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error updating tokens:', error);
+    }
     
     updateProgress(correct, currentProblem.topic);
 
@@ -183,6 +209,10 @@ const Practice = () => {
           <div className="flex items-center space-x-4">
             <Badge variant="secondary">Level {progress.currentLevel}</Badge>
             <Badge variant="outline">Session: {sessionCount} problems</Badge>
+            <Badge className="flex items-center space-x-1 bg-yellow-100 text-yellow-800">
+              <Coins className="w-3 h-3" />
+              <span>{profile?.tokens_remaining || 0} tokens</span>
+            </Badge>
           </div>
         </div>
       </header>
@@ -225,12 +255,17 @@ const Practice = () => {
                   <div className="mt-6">
                     <Button 
                       onClick={handleSubmit}
-                      disabled={!selectedAnswer}
+                      disabled={!selectedAnswer || (profile?.tokens_remaining || 0) <= 0}
                       className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
                       size="lg"
                     >
-                      Submit Answer
+                      {(profile?.tokens_remaining || 0) <= 0 ? 'No Tokens Remaining' : 'Submit Answer'}
                     </Button>
+                    {(profile?.tokens_remaining || 0) <= 0 && (
+                      <p className="text-sm text-red-600 text-center mt-2">
+                        Return to dashboard to purchase more tokens
+                      </p>
+                    )}
                   </div>
                 </>
               ) : (

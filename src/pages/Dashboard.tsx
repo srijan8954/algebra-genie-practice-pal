@@ -1,22 +1,24 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudent } from '@/contexts/StudentContext';
+import PaymentModal from '@/components/PaymentModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Brain, TrendingUp, User, Clock } from 'lucide-react';
+import { BookOpen, Brain, TrendingUp, User, Clock, Coins, CreditCard, Play, Award } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { progress } = useStudent();
   const navigate = useNavigate();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/auth');
     }
   }, [user, navigate]);
 
@@ -56,62 +58,68 @@ const Dashboard = () => {
           <p className="text-gray-600">Ready to continue your algebra journey?</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+        {/* Account & Tokens */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="md:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Level</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-sm font-medium">Account Tier</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{progress.currentLevel}</div>
-              <p className="text-xs text-muted-foreground">
-                {progress.currentLevel < 5 ? 'Beginner' : progress.currentLevel < 8 ? 'Intermediate' : 'Advanced'}
-              </p>
+              <div className="text-2xl font-bold capitalize">{profile?.subscription_tier || 'Basic'}</div>
+              <Badge variant={profile?.subscription_tier === 'premium' ? 'default' : 'secondary'} className="mt-2">
+                {profile?.subscription_tier === 'premium' ? 'Premium' : 'Basic'} Plan
+              </Badge>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="md:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Learning Tokens</CardTitle>
+              <Coins className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{profile?.tokens_remaining || 0}</div>
+              <p className="text-xs text-muted-foreground">Remaining tokens</p>
+              {(profile?.tokens_remaining || 0) < 10 && (
+                <Button 
+                  size="sm" 
+                  className="mt-2" 
+                  onClick={() => setShowPaymentModal(true)}
+                >
+                  <CreditCard className="w-3 h-3 mr-1" />
+                  Buy More
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Problems Solved</CardTitle>
-              <BookOpen className="h-4 w-4 text-green-600" />
+              <Brain className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{progress.totalProblems}</div>
-              <p className="text-xs text-muted-foreground">
-                {progress.correctAnswers} correct answers
-              </p>
+              <div className="text-2xl font-bold">{progress.totalProblems}</div>
+              <p className="text-xs text-muted-foreground">Total completed</p>
             </CardContent>
           </Card>
-
-          <Card>
+          
+          <Card className="md:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
-              <Brain className="h-4 w-4 text-purple-600" />
+              <CardTitle className="text-sm font-medium">Current Level</CardTitle>
+              <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{accuracy.toFixed(0)}%</div>
-              <Progress value={accuracy} className="mt-2" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-              <Clock className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{progress.streakCount}</div>
-              <p className="text-xs text-muted-foreground">
-                problems in a row
-              </p>
+              <div className="text-2xl font-bold">Level {progress.currentLevel}</div>
+              <p className="text-xs text-muted-foreground">Keep improving!</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Action Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/practice')}>
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Brain className="w-5 h-5 text-blue-600" />
@@ -122,9 +130,24 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
-                Start Practice Session
+              <Button 
+                onClick={() => {
+                  if ((profile?.tokens_remaining || 0) > 0) {
+                    navigate('/practice');
+                  } else {
+                    setShowPaymentModal(true);
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+              >
+                <Play className="mr-2 h-4 w-4" />
+                {(profile?.tokens_remaining || 0) > 0 ? 'Continue Learning' : 'Buy Tokens to Start'}
               </Button>
+              {(profile?.tokens_remaining || 0) === 0 && (
+                <p className="text-sm text-red-600 mt-2 text-center">
+                  You need tokens to continue learning
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -187,6 +210,11 @@ const Dashboard = () => {
           </Card>
         )}
       </main>
+
+      <PaymentModal 
+        open={showPaymentModal} 
+        onOpenChange={setShowPaymentModal} 
+      />
     </div>
   );
 };

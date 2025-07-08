@@ -52,10 +52,10 @@ const Index = () => {
             <span className="text-xl font-bold text-gray-800">AlgebraAI</span>
           </div>
           <div className="space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/login')}>
+            <Button variant="ghost" onClick={() => navigate('/auth')}>
               Login
             </Button>
-            <Button onClick={() => navigate('/register')}>
+            <Button onClick={() => navigate('/auth')}>
               Get Started
             </Button>
           </div>
@@ -74,7 +74,7 @@ const Index = () => {
             Build confidence with problems designed just for you.
           </p>
           <div className="space-x-4">
-            <Button size="lg" onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
+            <Button size="lg" onClick={() => navigate('/auth')} className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
               Start Learning Free
             </Button>
             <DemoVideoModal
