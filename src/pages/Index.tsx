@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Brain, TrendingUp, Users } from 'lucide-react';
+import DemoVideoModal from '@/components/DemoVideoModal';
 
 const Index = () => {
   const { user } = useAuth();
@@ -76,9 +77,13 @@ const Index = () => {
             <Button size="lg" onClick={() => navigate('/register')} className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
               Start Learning Free
             </Button>
-            <Button size="lg" variant="outline">
-              Watch Demo
-            </Button>
+            <DemoVideoModal
+              trigger={
+                <Button size="lg" variant="outline">
+                  Watch Demo
+                </Button>
+              }
+            />
           </div>
         </div>
 
