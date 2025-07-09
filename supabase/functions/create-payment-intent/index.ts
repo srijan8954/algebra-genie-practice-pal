@@ -37,8 +37,6 @@ serve(async (req) => {
     // Define token packages
     const packages = {
       basic: { tokens: 100, price: 4000 }, // $40 for 100 tokens
-      premium: { tokens: 250, price: 8000 }, // $80 for 250 tokens
-      ultimate: { tokens: 500, price: 14000 }, // $140 for 500 tokens
     };
 
     const selectedPackage = packages[tokenPackage as keyof typeof packages];

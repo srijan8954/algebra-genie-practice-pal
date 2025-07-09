@@ -22,27 +22,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onOpenChange }) => {
   const tokenPackages = [
     {
       id: 'basic',
-      name: 'Basic Package',
+      name: 'Learning Tokens',
       tokens: 100,
       price: '$40',
-      popular: false,
-      description: '100 AI-generated problems'
-    },
-    {
-      id: 'premium',
-      name: 'Premium Package',
-      tokens: 250,
-      price: '$80',
       popular: true,
-      description: '250 AI-generated problems'
-    },
-    {
-      id: 'ultimate',
-      name: 'Ultimate Package',
-      tokens: 500,
-      price: '$140',
-      popular: false,
-      description: '500 AI-generated problems'
+      description: '100 AI-generated problems'
     }
   ];
 
@@ -105,7 +89,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ open, onOpenChange }) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-3 gap-4 mt-6">
+        <div className="flex justify-center mt-6">
           {tokenPackages.map((pkg) => (
             <Card key={pkg.id} className={`relative cursor-pointer transition-all duration-200 hover:shadow-lg ${
               pkg.popular ? 'border-blue-500 shadow-md' : ''
