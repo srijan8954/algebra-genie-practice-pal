@@ -29,7 +29,10 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've been successfully logged in.",
         });
-        navigate('/dashboard');
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
       } else {
         toast({
           title: "Login failed",
@@ -78,7 +81,10 @@ const Auth = () => {
           title: "Account created! 🎉",
           description: "Welcome to AlgebraAI! You've received 100 free tokens to get started.",
         });
-        navigate('/dashboard');
+        // Small delay to ensure auth state is updated and profile is created
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
       } else {
         toast({
           title: "Registration failed",
