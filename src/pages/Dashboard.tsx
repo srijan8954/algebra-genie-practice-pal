@@ -3,24 +3,56 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudent } from '@/contexts/StudentContext';
-import PaymentModal from '@/components/PaymentModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Brain, TrendingUp, User, Clock, Coins, CreditCard, Play, Award } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { BookOpen, Brain, TrendingUp, User, Award, Play, Lightbulb, Target } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, profile, logout } = useAuth();
+  const { user, logout } = useAuth();
   const { progress } = useStudent();
   const navigate = useNavigate();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { toast } = useToast();
+  const [recommendations, setRecommendations] = useState<any>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+
+  const loadRecommendations = async () => {
+    if (progress.totalProblems === 0) return;
+    
+    setLoadingRecommendations(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-learning-recommendations', {
+        body: {
+          currentLevel: progress.currentLevel,
+          totalProblems: progress.totalProblems,
+          correctAnswers: progress.correctAnswers,
+          streakCount: progress.streakCount,
+          topicsCompleted: progress.topicsCompleted,
+          incorrectTopics: []
+        }
+      });
+
+      if (error) {
+        console.error('Error loading recommendations:', error);
+      } else {
+        setRecommendations(data);
+      }
+    } catch (error) {
+      console.error('Failed to load recommendations:', error);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
+    } else if (progress.totalProblems > 0) {
+      loadRecommendations();
     }
-  }, [user, navigate]);
+  }, [user, navigate, progress.totalProblems]);
 
   if (!user) return null;
 
@@ -151,6 +183,66 @@ const Dashboard = () => {
                     {topic}
                   </Badge>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI Learning Recommendations */}
+        {recommendations && (
+          <Card className="mb-8 border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-blue-800">
+                <Lightbulb className="w-5 h-5" />
+                <span>AI Learning Recommendations</span>
+              </CardTitle>
+              <CardDescription className="text-blue-600">
+                Personalized suggestions based on your progress
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                    <Target className="w-4 h-4 mr-2 text-blue-600" />
+                    Next Learning Goals
+                  </h4>
+                  <ul className="space-y-1">
+                    {recommendations.nextGoals?.map((goal: string, index: number) => (
+                      <li key={index} className="text-sm text-gray-700 flex items-start">
+                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                        {goal}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Study Strategies</h4>
+                  <ul className="space-y-1">
+                    {recommendations.studyStrategies?.map((strategy: string, index: number) => (
+                      <li key={index} className="text-sm text-gray-700 flex items-start">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                        {strategy}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              {recommendations.motivation && (
+                <div className="mt-4 p-4 bg-white/50 rounded-lg">
+                  <p className="text-sm text-gray-800 italic">"{recommendations.motivation}"</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {loadingRecommendations && progress.totalProblems > 0 && (
+          <Card className="mb-8">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <Brain className="w-5 h-5 animate-pulse text-blue-600" />
+                <span className="text-gray-600">AI is analyzing your progress...</span>
               </div>
             </CardContent>
           </Card>

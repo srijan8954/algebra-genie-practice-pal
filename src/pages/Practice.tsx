@@ -33,96 +33,62 @@ const Practice = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [sessionCount, setSessionCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [incorrectTopics, setIncorrectTopics] = useState<string[]>([]);
 
-  // Mock AI problem generation based on level
-  const generateProblem = (level: number): Problem => {
-    const topics = ['Linear Equations', 'Variables', 'Coefficients', 'Distributive Property', 'Combining Like Terms'];
-    const topic = topics[Math.floor(Math.random() * topics.length)];
-
-    // Generate problems based on level
-    if (level <= 2) {
-      const problems = [
-        {
-          question: `Solve for x: x + ${Math.floor(Math.random() * 10) + 1} = ${Math.floor(Math.random() * 20) + 10}`,
-          topic: 'Linear Equations'
-        },
-        {
-          question: `What is the coefficient of x in ${Math.floor(Math.random() * 9) + 2}x + ${Math.floor(Math.random() * 10) + 1}?`,
-          topic: 'Coefficients'
+  // AI-powered problem generation
+  const loadNewProblem = async () => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-algebra-problem', {
+        body: {
+          level: progress.currentLevel,
+          recentTopics: progress.topicsCompleted,
+          incorrectTopics: incorrectTopics
         }
-      ];
-      const problem = problems[Math.floor(Math.random() * problems.length)];
-      
-      if (problem.topic === 'Linear Equations') {
-        const a = Math.floor(Math.random() * 10) + 1;
-        const b = Math.floor(Math.random() * 20) + 10;
-        const correct = b - a;
-        return {
-          question: `Solve for x: x + ${a} = ${b}`,
-          options: [`x = ${correct}`, `x = ${correct + 1}`, `x = ${correct - 1}`, `x = ${a + b}`],
-          correct: `x = ${correct}`,
-          explanation: `To solve x + ${a} = ${b}, subtract ${a} from both sides: x = ${b} - ${a} = ${correct}`,
-          topic: problem.topic
-        };
-      } else {
-        const coeff = Math.floor(Math.random() * 9) + 2;
-        const constant = Math.floor(Math.random() * 10) + 1;
-        return {
-          question: `What is the coefficient of x in ${coeff}x + ${constant}?`,
-          options: [`${coeff}`, `${constant}`, `${coeff + constant}`, `x`],
-          correct: `${coeff}`,
-          explanation: `The coefficient is the number multiplying the variable. In ${coeff}x + ${constant}, the coefficient of x is ${coeff}.`,
-          topic: problem.topic
-        };
+      });
+
+      if (error) {
+        console.error('Error generating problem:', error);
+        throw error;
       }
-    } else if (level <= 4) {
-      const a = Math.floor(Math.random() * 5) + 2;
-      const b = Math.floor(Math.random() * 10) + 5;
-      const c = Math.floor(Math.random() * 20) + 10;
-      const correct = (c + b) / a;
+
+      if (data) {
+        setCurrentProblem(data);
+        setSelectedAnswer('');
+        setShowResult(false);
+      }
+    } catch (error) {
+      console.error('Failed to generate AI problem:', error);
+      toast({
+        title: "Problem Generation Failed",
+        description: "Using a backup problem. Please try again.",
+        variant: "destructive",
+      });
       
-      return {
-        question: `Solve for x: ${a}x - ${b} = ${c}`,
-        options: [`x = ${correct}`, `x = ${correct + 1}`, `x = ${correct - 1}`, `x = ${Math.floor(correct * 2)}`],
-        correct: `x = ${correct}`,
-        explanation: `To solve ${a}x - ${b} = ${c}, add ${b} to both sides: ${a}x = ${c + b}, then divide by ${a}: x = ${correct}`,
-        topic: 'Linear Equations'
+      // Fallback to a simple problem if AI generation fails
+      const fallbackProblem = {
+        question: `Solve for x: x + 5 = 12`,
+        options: ["A) x = 7", "B) x = 8", "C) x = 6", "D) x = 17"],
+        correct: "A) x = 7",
+        explanation: "To solve x + 5 = 12, subtract 5 from both sides: x = 12 - 5 = 7",
+        topic: "Linear Equations"
       };
-    } else {
-      const a = Math.floor(Math.random() * 4) + 2;
-      const b = Math.floor(Math.random() * 5) + 1;
-      const c = Math.floor(Math.random() * 20) + 15;
-      const correct = c / a - b;
-      
-      return {
-        question: `Solve for x: ${a}(x + ${b}) = ${c}`,
-        options: [`x = ${correct}`, `x = ${correct + 1}`, `x = ${correct - 1}`, `x = ${Math.floor(correct / 2)}`],
-        correct: `x = ${correct}`,
-        explanation: `To solve ${a}(x + ${b}) = ${c}, divide both sides by ${a}: x + ${b} = ${c / a}, then subtract ${b}: x = ${correct}`,
-        topic: 'Distributive Property'
-      };
+      setCurrentProblem(fallbackProblem);
+      setSelectedAnswer('');
+      setShowResult(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/auth');
       return;
     }
     loadNewProblem();
   }, [user, navigate]);
-
-  const loadNewProblem = () => {
-    setIsLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      const problem = generateProblem(progress.currentLevel);
-      setCurrentProblem(problem);
-      setSelectedAnswer('');
-      setShowResult(false);
-      setIsLoading(false);
-    }, 500);
-  };
 
   const handleAnswerSelect = (answer: string) => {
     setSelectedAnswer(answer);
@@ -135,6 +101,11 @@ const Practice = () => {
     setIsCorrect(correct);
     setShowResult(true);
     setSessionCount(sessionCount + 1);
+    
+    // Track incorrect topics for adaptive learning
+    if (!correct && !incorrectTopics.includes(currentProblem.topic)) {
+      setIncorrectTopics(prev => [...prev, currentProblem.topic]);
+    }
     
     updateProgress(correct, currentProblem.topic);
 

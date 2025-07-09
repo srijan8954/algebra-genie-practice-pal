@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStudent } from '@/contexts/StudentContext';
@@ -9,7 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Brain } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle, Brain, Loader2 } from 'lucide-react';
 
 const Assessment = () => {
   const { user } = useAuth();
