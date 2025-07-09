@@ -29,14 +29,13 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've been successfully logged in.",
         });
-        // Small delay to ensure auth state is updated
         setTimeout(() => {
           navigate('/dashboard');
         }, 100);
       } else {
         toast({
           title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          description: "Please check your credentials or confirm your email if you haven't already.",
           variant: "destructive",
         });
       }

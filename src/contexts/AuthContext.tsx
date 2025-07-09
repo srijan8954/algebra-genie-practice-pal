@@ -102,6 +102,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        if (error.message === "Email not confirmed") {
+          console.log('Email confirmation required - resending confirmation email');
+          // Resend confirmation email
+          await supabase.auth.resend({
+            type: 'signup',
+            email: email,
+            options: {
+              emailRedirectTo: `${window.location.origin}/dashboard`
+            }
+          });
+          return false;
+        }
         console.error('Login error:', error.message);
         return false;
       }

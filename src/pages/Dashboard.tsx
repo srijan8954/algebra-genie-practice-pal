@@ -58,42 +58,8 @@ const Dashboard = () => {
           <p className="text-gray-600">Ready to continue your algebra journey?</p>
         </div>
 
-        {/* Account & Tokens */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="md:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Account Tier</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold capitalize">{profile?.subscription_tier || 'Basic'}</div>
-              <Badge variant={profile?.subscription_tier === 'premium' ? 'default' : 'secondary'} className="mt-2">
-                {profile?.subscription_tier === 'premium' ? 'Premium' : 'Basic'} Plan
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Learning Tokens</CardTitle>
-              <Coins className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{profile?.tokens_remaining || 0}</div>
-              <p className="text-xs text-muted-foreground">Remaining tokens</p>
-              {(profile?.tokens_remaining || 0) < 10 && (
-                <Button 
-                  size="sm" 
-                  className="mt-2" 
-                  onClick={() => setShowPaymentModal(true)}
-                >
-                  <CreditCard className="w-3 h-3 mr-1" />
-                  Buy More
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-          
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="md:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Problems Solved</CardTitle>
@@ -102,6 +68,17 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{progress.totalProblems}</div>
               <p className="text-xs text-muted-foreground">Total completed</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="md:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Accuracy</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{Math.round(accuracy)}%</div>
+              <p className="text-xs text-muted-foreground">Overall accuracy</p>
             </CardContent>
           </Card>
           
@@ -131,23 +108,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <Button 
-                onClick={() => {
-                  if ((profile?.tokens_remaining || 0) > 0) {
-                    navigate('/practice');
-                  } else {
-                    setShowPaymentModal(true);
-                  }
-                }}
+                onClick={() => navigate('/practice')}
                 className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
               >
                 <Play className="mr-2 h-4 w-4" />
-                {(profile?.tokens_remaining || 0) > 0 ? 'Continue Learning' : 'Buy Tokens to Start'}
+                Start Learning
               </Button>
-              {(profile?.tokens_remaining || 0) === 0 && (
-                <p className="text-sm text-red-600 mt-2 text-center">
-                  You need tokens to continue learning
-                </p>
-              )}
             </CardContent>
           </Card>
 
@@ -210,11 +176,6 @@ const Dashboard = () => {
           </Card>
         )}
       </main>
-
-      <PaymentModal 
-        open={showPaymentModal} 
-        onOpenChange={setShowPaymentModal} 
-      />
     </div>
   );
 };
